@@ -7,8 +7,6 @@ import spidev
 
 from colorsys import hsv_to_rgb
 
-import RPi.GPIO as GPIO
-
 __version__ = '0.0.2'
 
 
@@ -45,16 +43,16 @@ class UnicornHATMini():
         self.left_matrix = (spidev.SpiDev(0, 0), 8, 0)
         self.right_matrix = (spidev.SpiDev(0, 1), 7, 28 * 8)
 
-        GPIO.setwarnings(False)
-        GPIO.setmode(GPIO.BCM)
-
         self.buf = [0 for _ in range(28 * 8 * 2)]
         self._rotation = 0
 
+        # Let the SPI peripheral drive the CE0/CE1 chip-select lines in
+        # hardware. Bit-banging them via RPi.GPIO conflicts with the kernel
+        # SPI driver, which already owns those pins, and fails with
+        # "GPIO busy" on the lgpio-backed RPi.GPIO used by current
+        # Raspberry Pi OS releases.
         for device, pin, offset in self.left_matrix, self.right_matrix:
-            device.no_cs = True
             device.max_speed_hz = spi_max_speed_hz
-            GPIO.setup(pin, GPIO.OUT, initial=GPIO.HIGH)
             self.xfer(device, pin, [CMD_SOFT_RESET])
             self.xfer(device, pin, [CMD_GLOBAL_BRIGHTNESS, 0x01])
             self.xfer(device, pin, [CMD_SCROLL_CTRL, 0x00])
@@ -76,9 +74,9 @@ class UnicornHATMini():
         self._shutdown()
 
     def xfer(self, device, pin, command):
-        GPIO.output(pin, GPIO.LOW)
+        # CE0/CE1 are asserted around the transfer automatically by the SPI
+        # hardware; `pin` is retained only for signature compatibility.
         device.xfer2(command)
-        GPIO.output(pin, GPIO.HIGH)
 
     def set_pixel(self, x, y, r, g, b):
         """Set a single pixel."""
