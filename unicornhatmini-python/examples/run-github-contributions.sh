@@ -46,6 +46,17 @@ if ! python3 -c "import unicornhatmini" >/dev/null 2>&1; then
     pip install --quiet unicornhatmini
 fi
 
+# --- 3b. Apply the "GPIO busy" fix ------------------------------------------
+# The PyPI release bit-bangs the SPI chip-select pins with RPi.GPIO, which
+# clashes with the kernel SPI driver on current Raspberry Pi OS (lgpio-backed
+# RPi.GPIO) and crashes with "GPIO busy". Copy this repo's patched module over
+# the installed one if the installed copy still imports RPi.GPIO.
+INSTALLED_DIR="$(python3 -c 'import unicornhatmini, os; print(os.path.dirname(unicornhatmini.__file__))')"
+if grep -q "^import RPi.GPIO" "$INSTALLED_DIR/__init__.py"; then
+    echo "Applying GPIO-busy fix to installed library..."
+    cp "$SCRIPT_DIR/../library/unicornhatmini/__init__.py" "$INSTALLED_DIR/__init__.py"
+fi
+
 # --- 4. Run the display -----------------------------------------------------
 echo "Starting GitHub contributions display for '$USERNAME'..."
 exec python3 "$SCRIPT_DIR/github-contributions.py" "$USERNAME"
