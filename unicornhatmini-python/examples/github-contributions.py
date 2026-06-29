@@ -58,10 +58,17 @@ def build_grid(contributions):
     Columns are weeks (oldest on the left), rows are weekdays with Sunday at
     the top to match the github.com layout.
     """
+    # The API returns the whole current year, including future dates (which are
+    # all level 0). Ignore anything past today so "the most recent weeks" are
+    # real weeks with data rather than empty future ones.
+    today = datetime.now().date()
+
     # Group contributions by the Sunday that starts their week.
     weeks = {}
     for entry in contributions:
         date = datetime.strptime(entry["date"], "%Y-%m-%d").date()
+        if date > today:
+            continue
         # Python: Monday=0..Sunday=6. GitHub rows: Sunday=0..Saturday=6.
         row = (date.weekday() + 1) % 7
         week_start = date - timedelta(days=row)
