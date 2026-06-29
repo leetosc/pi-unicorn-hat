@@ -21,14 +21,16 @@ from urllib.request import urlopen, Request
 from unicornhatmini import UnicornHATMini
 
 
-# GitHub-style green levels 0-4. Level 0 is "no contributions" and is shown
-# as a very dim slate so the empty cells are still visible on the board.
+# GitHub-style green levels 0-4 as a clearly ascending brightness ramp so the
+# steps are easy to tell apart on the LEDs. Level 0 (no contributions) is fully
+# off rather than a dim colour, otherwise quiet weeks look "lit but dark" and
+# are hard to distinguish from low-activity weeks.
 LEVEL_COLOURS = [
-    (4, 8, 10),       # 0 - none
-    (14, 68, 41),     # 1 - low
-    (38, 166, 65),    # 2 - medium
-    (57, 211, 102),   # 3 - high
-    (86, 255, 130),   # 4 - max
+    (0, 0, 0),        # 0 - none (off)
+    (0, 70, 20),      # 1 - low
+    (0, 150, 45),     # 2 - medium
+    (40, 220, 80),    # 3 - high
+    (150, 255, 160),  # 4 - max
 ]
 
 WIDTH = 17   # weeks
@@ -87,7 +89,7 @@ def main():
 
     unicornhatmini = UnicornHATMini()
     unicornhatmini.set_rotation(0)
-    unicornhatmini.set_brightness(0.5)
+    unicornhatmini.set_brightness(0.6)
 
     for x in range(WIDTH):
         for y in range(HEIGHT):

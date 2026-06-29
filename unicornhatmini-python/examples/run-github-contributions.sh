@@ -46,15 +46,16 @@ if ! python3 -c "import unicornhatmini" >/dev/null 2>&1; then
     pip install --quiet unicornhatmini
 fi
 
-# --- 3b. Apply the "GPIO busy" fix ------------------------------------------
-# The PyPI release bit-bangs the SPI chip-select pins with RPi.GPIO, which
-# clashes with the kernel SPI driver on current Raspberry Pi OS (lgpio-backed
-# RPi.GPIO) and crashes with "GPIO busy". Copy this repo's patched module over
-# the installed one if the installed copy still imports RPi.GPIO.
+# --- 3b. Install this repo's patched library module -------------------------
+# The PyPI release (0.0.2) doesn't run on current Raspberry Pi OS as shipped.
+# This repo's library/ contains the working version, so copy it over whatever
+# pip installed. (Note: this still requires GPIO 7/8 to be freed from the
+# kernel SPI driver via config.txt, see the README.)
 INSTALLED_DIR="$(python3 -c 'import unicornhatmini, os; print(os.path.dirname(unicornhatmini.__file__))')"
-if grep -q "^import RPi.GPIO" "$INSTALLED_DIR/__init__.py"; then
-    echo "Applying GPIO-busy fix to installed library..."
-    cp "$SCRIPT_DIR/../library/unicornhatmini/__init__.py" "$INSTALLED_DIR/__init__.py"
+REPO_MODULE="$SCRIPT_DIR/../library/unicornhatmini/__init__.py"
+if [ -f "$REPO_MODULE" ] && ! cmp -s "$REPO_MODULE" "$INSTALLED_DIR/__init__.py"; then
+    echo "Installing patched unicornhatmini module into the venv..."
+    cp "$REPO_MODULE" "$INSTALLED_DIR/__init__.py"
 fi
 
 # --- 4. Run the display -----------------------------------------------------
